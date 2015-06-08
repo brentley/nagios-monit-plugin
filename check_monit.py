@@ -59,19 +59,19 @@ svc_perfdata = None
 opts = None
 
 def ok(message):
-    print "OK: %s%s"%(message,perfdata_string)
+    print "0 monit_status %s%s"%(perfdata_string,message)
     sys.exit(0)
 
 def warning(message):
-    print "WARNING: %s%s"%(message,perfdata_string)
+    print "1 monit_status %s%s"%(perfdata_string,message)
     sys.exit(1)
 
 def critical(message):
-    print "CRITICAL: %s%s"%(message,perfdata_string)
+    print "2 monit_status %s%s"%(perfdata_string,message)
     sys.exit(2)
 
 def unknown(message):
-    print "UNKNOWN: %s%s"%(message,perfdata_string)
+    print "3 monit_status %s%s"%(perfdata_string,message)
     sys.exit(3)
 
 def debug_print(text):
@@ -222,7 +222,7 @@ def process_monit_response(response):
 def main():
     global opts, svc_includere, svc_excludere, svc_perfdata, perfdata_string
     p = OptionParser(usage="Usage: %prog -H <host> [<options>]", version=VERSION)
-    p.add_option("-H","--host", dest="host", help="Hostname or IP address")
+    p.add_option("-H","--host", dest="host", default="127.0.0.1", help="Hostname or IP address")
     p.add_option("-p","--port", dest="port", type="int", default=2812, help="Port (Default: %default)")
     p.add_option("-s","--ssl", dest="ssl", action="store_true", default=False, help="Use SSL")
     p.add_option("-u","--username", dest="username", help="Username")
@@ -237,7 +237,7 @@ def main():
     p.add_option("-C","--cpu", dest="process_cpu", action="store_true", default=False, help="Display cpu performance data")
     p.add_option("-L","--load", dest="process_la", action="store_true", default=False, help="Display load average performance data")
     p.add_option("-o", "--states-perfdata", dest="states_perfdata",
-                 action="store_true", default=False,
+                 action="store_true", default=True,
                  help="Add the number of services in ok/warn/critical states"
                  " to perfdata")
     (opts, args) = p.parse_args()
@@ -255,21 +255,22 @@ def main():
 
     process_monit_response(get_status())
     if opts.states_perfdata:
-        perfdata.append("state_ok=%i state_warning=%i state_critical=%i" % (
+        perfdata.append("state_ok=%i|state_warning=%i|state_critical=%i" % (
             len(oks), len(warnings), len(errors)))
     if perfdata:
-        perfdata_string = ' | ' + ' '.join(perfdata)
+        # perfdata_string = '|' + ''.join(perfdata)
+        perfdata_string = ''.join(perfdata)
     
     if errors:
-        critical('%s'%'; '.join(errors))
+        critical(' %s'%'; '.join(errors))
 
     if warnings:
-        warning('%s'%'; '.join(warnings))
+        warning(' %s'%'; '.join(warnings))
 
     if opts.verbose:
-        ok('Total %i services are monitored: %s; %s'%(len(services_monitored),','.join(services_monitored), ' '.join(system_info)))
+        ok(' Total %i services are monitored: %s; %s'%(len(services_monitored),','.join(services_monitored), ' '.join(system_info)))
     else:
-        ok('Total %i services are monitored'%(len(services_monitored)))
+        ok(' Total %i services are monitored'%(len(services_monitored)))
 
 if __name__ == '__main__':
     main()
