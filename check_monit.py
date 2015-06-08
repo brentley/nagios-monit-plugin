@@ -188,7 +188,14 @@ def process_service(service):
     if not int(monitor) & 1:
         warnings.append('%s %s is unmonitored'%(svctype, svcname))
     
-    if not status_num == "0":
+
+# status codes from https://mmonit.com/documentation/http-api/Methods/Events
+# 1=checksum, 2=resource, 4=timeout, 8=timestamp, 16=size, 32=connection, 64=permission, 128=UID, 256=GID, 512=nonexist, 1024=invalid, 2048=data, 4096=exec, 8192=fsflags, 16384=icmp, 32768=content, 65536=instance, 131072=action, 262144=PID, 524288=PPID, 1048576=heartbeat, 2097152=status, 4194304=uptime
+# we currently supress on { pid, ppid, exec, nonexist, action, timeout, instance }
+
+    statusok = ['0','4','512','4096','262144','131072','65536','524288']
+
+    if status_num not in statusok:
         try:
             msg = "%s %s: %s" % (svctype, svcname,
                                  service.find('status_message').text)
